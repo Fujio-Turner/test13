@@ -83,6 +83,10 @@
     
     //[self startPush];
     
+    //[self viewTitle];
+    
+    //[self queryTitle];
+    
     return YES;
 }
 
@@ -98,7 +102,7 @@
         NSLog (@"Cannot create shared instance of CBLManager");
         return NO;
     }else{
-        //[CBLManager enableLogging: @"Sync"];
+        [CBLManager enableLogging: @"Sync"];
         /*
         Logging Options: https://developer.couchbase.com/documentation/mobile/current/guides/couchbase-lite/native-api/manager/index.html
         */
@@ -113,7 +117,7 @@
     
     NSError *error;
     // create a name for the database and make sure the name is legal
-    NSString *dbname = @"fujio-db";
+    NSString *dbname = @"sample-db";
     if (![CBLManager isValidDatabaseName: dbname]) {
         NSLog (@"Bad database name");
         return NO;
@@ -147,7 +151,7 @@
     
     
      // get the document from the DB by name
-    CBLDocument *doc = [self.database documentWithID: @"myFirstDoc2"];
+    CBLDocument *doc = [self.database documentWithID: @"myFirstDoc"];
     // write the document to the database
     if (![doc putProperties: myDictionary error: &error]) {
         NSLog (@"Cannot write document to database. Error message: %@", error.localizedDescription);
@@ -272,4 +276,30 @@
         }
     }
 }
+
+- (void) viewTitle{
+    
+    CBLView* view = [_database viewNamed: @"title"];
+    [view setMapBlock: MAPBLOCK({
+        if(doc[@"title"]){
+            emit(doc[@"title"],nil);
+        }
+    }) version: @"1"];
+    
+    [view createQuery];
+}
+
+- (void) queryTitle{
+
+    NSError* error;
+    CBLQuery* query = [[_database viewNamed: @"title"] createQuery];
+    query.descending = YES;
+    query.limit = 20;
+
+    CBLQueryEnumerator* result = [query run: &error];
+    for (CBLQueryRow* row in result) {
+        NSLog(@"Title is: %@", row.key);
+    }
+}
+
 @end
